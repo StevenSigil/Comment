@@ -1,48 +1,35 @@
-import { MongoClient } from 'mongodb'
+import mongoose from "mongoose";
 
-const { MONGODB_URI, MONGODB_DB } = process.env
+// const { MONGODB_URI, MONGODB_DB } = process.env;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  )
-}
-
-if (!MONGODB_DB) {
-  throw new Error(
-    'Please define the MONGODB_DB environment variable inside .env.local'
-  )
-}
-
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
- * during API Route usage.
- */
-let cached = global.mongo
+let cached = global.mongo;
 
 if (!cached) {
-  cached = global.mongo = { conn: null, promise: null }
+  cached = global.mongo = { conn: null, promise: null };
 }
 
 export async function connectToDatabase() {
   if (cached.conn) {
-    return cached.conn
+    console.log("reusing mongo cached connection");
+    return cached.conn;
   }
 
   if (!cached.promise) {
+    console.log("attempting to open a connection to mongoDB");
     const opts = {
-      useNewUrlParser: true,
       useUnifiedTopology: true,
-    }
+      useFindAndModify: false,
+      useCreateIndex: true,
+      useNewUrlParser: true,
+    };
 
-    cached.promise = MongoClient.connect(MONGODB_URI, opts).then((client) => {
-      return {
-        client,
-        db: client.db(MONGODB_DB),
-      }
-    })
+    cached.promise = await mongoose
+      .connect(MONGODB_URI, opts)
+      .catch((error) => console.log(error));
   }
-  cached.conn = await cached.promise
-  return cached.conn
+
+  cached.conn = await cached.promise;
+  console.log(cached.conn.client);
+  return cached.conn;
 }

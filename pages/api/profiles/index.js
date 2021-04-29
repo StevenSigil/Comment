@@ -10,7 +10,7 @@ import Comments from "../../../models/commentModel";
  * - GET: retrieve ALL UserProfiles instances
  * - POST: Create a new UserProfile instance with a given UID (auth)
  *
- * Expecting request.body formate as:
+ * Expecting request.body format as:
  * {"base_user_id": "[UID (auth)]", "display_name":
  * "[VALIDATED-userInput]", "photo_url": "[UriToPhoto]"}
  *
@@ -51,12 +51,16 @@ export default async (req, res) => {
 
         const createdProfile = await profile
           .save()
-          .catch((e) => console.log(e));
+          .catch((error) => console.log("profiles/index.js: 54\n",error));
+          
         const returnedProfile = await UserProfiles.findById(createdProfile._id);
 
         return res.status(201).json(returnedProfile);
       } catch (error) {
-        console.log("profiles/index.js: 42\n", error);
+        console.log("profiles/index.js: 59\n", error);
+        return res
+          .status(422)
+          .json({ message: "ERROR! UserProfile was not saved!" });
       }
     }
     return res

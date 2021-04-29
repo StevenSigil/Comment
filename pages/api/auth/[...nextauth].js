@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import Providers from "next-auth/providers";
+import UserProfiles from "../../../models/profileModel";
+import { connectToDatabase } from "../../../util/mongodb";
 
 const options = {
   site: process.env.NEXTAUTH_URL,
@@ -28,12 +30,26 @@ const options = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async session(session, token) {
-      // Adds the UID to session for retrieving the user's profile
-      session.user._id = token.sub;
+    jwt: async (token, user, account, profile, isNewUser) => {
+      user && (token.user = user);
+      token.pid = await getProfileId(token.sub);
+      return token;
+    },
+    session: async (session, token) => {
+      // Adds the basic user data to session object
+      session.user = token.user;
+      session.user.pid = token.pid;
       return session;
     },
   },
 };
+
+async function getProfileId(uid) {
+  // Used to add the profile._id to session for frontend api
+  await connectToDatabase();
+  const profile = await UserProfiles.findOne({ base_user_id: uid }).exec();
+
+  return profile ? profile._id : null;
+}
 
 export default (req, res) => NextAuth(req, res, options);

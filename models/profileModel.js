@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import User from "./userModel";
 
 const profileSchema = mongoose.Schema({
   base_user_id: {
@@ -30,6 +31,19 @@ const profileSchema = mongoose.Schema({
     type: [mongoose.Schema.Types.ObjectId],
     ref: "posts",
   },
+});
+
+profileSchema.post("save", async function (doc) {
+  // Add the UserProfile instance to User instance (to be retrieved on frontend)
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: doc.base_user_id },
+    { $set: { pid: doc._id } }
+  )
+    .exec()
+    .catch((err) => console.log("profileModel-postSave: 43\n", err));
+
+  if (updatedUser.ok)
+    console.log("User instance updated with profile ID.\n", updatedUser);
 });
 
 export default mongoose.models["user_profiles"] ||

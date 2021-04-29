@@ -1,5 +1,5 @@
 import { connectToDatabase } from "../../../../util/mongodb";
-import UserProfile from "../../../../models/profileModel";
+import UserProfiles from "../../../../models/profileModel";
 import Posts from "../../../../models/postModel";
 import Comments from "../../../../models/commentModel";
 
@@ -15,7 +15,7 @@ export default async (req, res) => {
   await connectToDatabase();
 
   const uid = req.query.id;
-  const singleProfile = await UserProfile.findOne({ base_user_id: uid })
+  const singleProfile = await UserProfiles.findOne({ base_user_id: uid })
     .populate("posts", "meta_title", Posts)
     .populate("comments", "message date_time", Comments)
     .populate("liked_posts", "meta_title", Posts)

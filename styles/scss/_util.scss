@@ -36,3 +36,16 @@
   display: flex;
   flex-direction: column;
 }
+
+button {
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  border-width: 1px;
+  max-width: 5rem;
+  background-color: transparent;
+}
+button:active, button:hover {
+  cursor: pointer;
+  border-radius: 5px;
+  border-width: 1px;
+}

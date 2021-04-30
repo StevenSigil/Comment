@@ -38,7 +38,7 @@ export default async (req, res) => {
           { $addToSet: { liked_posts: updatedPost._id } },
           { new: true }
         ).catch((e) => console.log(e));
-        console.log("UserProfiles.liked_posts updated via remove");
+        console.log("UserProfiles.liked_posts updated via add");
 
         return res.status(200).json({
           data: {

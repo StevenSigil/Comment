@@ -1,6 +1,38 @@
-export default function Home({ posts }) {
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { ReactComponent as CheckCircle } from "../public/static/icons/checkCircle.svg";
+import { ReactComponent as CommentIcon } from "../public/static/icons/commentIcon.svg";
+// import UploadCommentModal from "./UploadCommentModal";
+
+import useSWR, { mutate } from "swr";
+import { useUserProfile } from "../util/swrHooks";
+
+const SERVER = process.env.SERVER;
+
+export default function Home({ posts, profileId }) {
+  const { profile, loadingProfile, errorProfile } = useUserProfile(profileId);
+
+  async function handleLikeBtnPress(postId, userAlreadyLiked) {
+    if (profile) {
+      // Add or remove depending on current status of like & user relation
+      const urlCommand = userAlreadyLiked ? "remove" : "add";
+
+      await axios.post(`${SERVER}/api/posts/${postId}/likes`, {
+        profileId: profile._id,
+        command: urlCommand,
+      });
+      // refresh the SWR posts state
+      mutate("/api/posts");
+      mutate(`api/profiles/${profile._id}`);
+    } else {
+      console.log(errorProfile);
+    }
+  }
+
   return (
     <>
+      {loadingProfile ? <p>Loading Profile...</p> : null}
+
       <div className="home">
         <div className="heading">
           <h1>Welcome!</h1>
@@ -9,102 +41,157 @@ export default function Home({ posts }) {
 
         <div className="postContainer">
           {posts.map((post) => (
-            <SinglePostCard post={post} />
+            <SinglePostCard
+              key={post._id}
+              post={post}
+              profile={profile}
+              handleLikeBtnPress={handleLikeBtnPress}
+            />
           ))}
-
-          {/* <SinglePostCard post={posts[4]} /> */}
         </div>
       </div>
     </>
   );
 }
 
-export function SinglePostCard({ post }) {
-  console.log(post);
+export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
+  const comments = post.comments; // for dev - REMOVE
 
-  const comments = post.comments[0]; // for dev - REMOVE
+  const [newCommentInput, setNewCommentInput] = useState("");
+  const [showCommentInput, setShowCommentInput] = useState(false);
+
+  function handleNewComment() {
+    if (profile._id) {
+      setShowCommentInput(true);
+    } else {
+      // User is not signed in!!!
+      alert("You must be signed in to comment on this post.");
+    }
+  }
+
+  async function handleCommentSubmit(e) {
+    e.preventDefault();
+
+    const data = {
+      message: newCommentInput,
+      commenting_user: profile._id,
+      post: post._id,
+    };
+
+    try {
+      const x = await axios.post(`${SERVER}/api/comments`, data);
+      console.log(x.data);
+      setNewCommentInput("");
+      setShowCommentInput(false);
+      mutate("/api/posts");
+      mutate(`api/profiles/${profile._id}`);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  function handleCommentTextChange(e) {
+    const target = e.target;
+
+    if (target.value.length < 10) {
+      e.target.rows = "2";
+    } else {
+      target.style.height = "auto";
+      const height = Math.abs(Math.round(target.scrollHeight / 30));
+      e.target.rows = height;
+    }
+    setNewCommentInput(e.target.value);
+  }
+
+  // Checks if the curUser liked this Post instance and changes display
+  const userLikedPost =
+    profile && post.likes.some((like) => like._id === profile._id);
 
   return (
-    <div key={post._id} className="postCard">
-      {post.meta_image ? (
-        <div className="imgContainer">
-          <img src={post.meta_image} />
+    <>
+      <div className="postCard">
+        {post.meta_image ? (
+          <div className="imgContainer">
+            <img src={post.meta_image} />
+          </div>
+        ) : null}
 
-          {/* <img src={post.meta_image} /> */}
-        </div>
-      ) : null}
+        <div className="postCard-textHeading">
+          <div className="left">
+            <h2>{post.meta_title}</h2>
+            <p className="subText">{post.meta_url}</p>
+            <p>{post.meta_description}</p>
+          </div>
+          <div className="right">
+            <p>
+              Uploaded {new Date(post.upload_date).toLocaleDateString()}{" "}
+              {new Date(post.upload_date).toLocaleTimeString()}
+            </p>
 
-      <div className="postCard-textHeading">
-        <div className="left">
-          <h2>{post.meta_title}</h2>
-          <p className="subText">{post.meta_url}</p>
-          <p>{post.meta_description}</p>
+            <div className="utilContainer">
+              <p>{post.comments.length}</p>
+              <button onClick={handleNewComment}>
+                <CommentIcon />
+              </button>
+            </div>
+
+            <div className="utilContainer">
+              <p>{post.likes.length}</p>
+              <button
+                onClick={() => handleLikeBtnPress(post._id, userLikedPost)}
+                className={userLikedPost ? "fill" : ""}
+              >
+                <CheckCircle />
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="right">
-          <p>
-            Uploaded {new Date(post.upload_date).toLocaleDateString()}{" "}
-            {new Date(post.upload_date).toLocaleTimeString()}
-          </p>
-          <p>Comments {post.comments.length}</p>
-          <p>Likes {post.likes.length}</p>
+
+        {comments.length > 0 ? <hr /> : null}
+
+        {comments &&
+          comments.map((comment) => {
+            return (
+              <div key={comment._id} className="postCard-singleComment">
+                {/* TODO: Have this be clickable, show options to comment on the comment or like or whatever */}
+
+                <div className="userBtn">
+                  <img src={comment.commenting_user.photo_url} />
+                  <p>{comment.commenting_user.display_name}</p>
+                </div>
+                <div className="commentText">
+                  <p className="date">{comment.date_time}</p>
+                  <p className="message">{comment.message}</p>
+                </div>
+              </div>
+            );
+          })}
+
+        <div
+          className="postCard-newComment"
+          style={{ display: showCommentInput ? "block" : "none" }}
+        >
+          <form onSubmit={handleCommentSubmit}>
+            <label htmlFor="commentInput">Share your thoughts</label>
+            <textarea
+              id="commentInput"
+              value={newCommentInput}
+              onChange={handleCommentTextChange}
+              placeholder="Your comment"
+              maxLength="500"
+              rows="2"
+            />
+            <button type="submit">Submit</button>
+          </form>
         </div>
       </div>
 
-      {comments ? (
-        <div className="postCard-singleComment">
-          {/* TODO: Have this be clickable, show options to comment on the comment or like or whatever */}
-
-          <div className="userBtn">
-            <img src={comments.commenting_user.photo_url} />
-            <p>{comments.commenting_user.display_name}</p>
-          </div>
-          <div className="commentText">
-            <p className="date">{comments.date_time}</p>
-            <p className="message">{comments.message}</p>
-          </div>
-        </div>
-      ) : null}
-    </div>
+      {/* <UploadCommentModal
+        show={showUpComMod}
+        setShow={setShowUpComMod}
+        postId={post._id}
+        profileId={profileId}
+      /> */}
+    </>
   );
 }
-
-// {
-//   "comments": [
-//       {
-//           "message": "testing - website has a 'share to twitter' button (and Facebook/Linkedin) so it should work!",
-//           "_id": "608357bcc067873dd04fff20",
-//           "commenting_user": {
-//               "_id": "6081b18c780ebe0e2d11c16c",
-//               "display_name": "Test1",
-//               "photo_url": "https://picsum.photos/100"
-//           },
-//           "date_time": "2021-04-23T23:26:52.592Z"
-//       }
-//   ],
-//////   "likes": [
-//////
-//////   ],
-//   "_id": "608357bcc067873dd04fff1f",
-//   "posting_user": {
-//       "_id": "6081b18c780ebe0e2d11c16c",
-//       "display_name": "Test1",
-//       "photo_url": "https://picsum.photos/100"
-//   },
-//   "original_url": "https://machinelearningmastery.com/how-to-develop-lstm-models-for-time-series-forecasting/",
-////////   "meta_title": "How to Develop LSTM Models for Time Series Forecasting - Machine Learning Mastery",
-///////   "meta_description": "Long Short-Term Memory networks, or LSTMs for short, can be applied to time series forecasting. There are many types of […]",
-//////   "meta_image": "https://machinelearningmastery.com/wp-content/uploads/2018/11/How-to-Develop-LSTM-Models-for-Time-Series-Forecasting.jpg",
-/////   "meta_url": "machinelearningmastery.com",
-////   "upload_date": "2021-04-23T23:26:52.559Z",
-//   "__v": 0
-// }
-
-//////// comments: ["608357bcc067873dd04fff20"]
-/////// likes: []
-////// meta_description: "Long Short-Term Memory networks, or LSTMs for short, can be applied to time series forecasting. There are many types of […]"
-///// meta_image: "https://machinelearningmastery.com/wp-content/uploads/2018/11/How-to-Develop-LSTM-Models-for-Time-Series-Forecasting.jpg"
-//// meta_title: "How to Develop LSTM Models for Time Series Forecasting - Machine Learning Mastery"
-/// meta_url: "machinelearningmastery.com"
-// original_url: "https://machinelearningmastery.com/how-to-develop-lstm-models-for-time-series-forecasting/"
-// posting_user: "6081b18c780ebe0e2d11c16c"
-// upload_date: "2021-04-23T23:26:52.559Z"

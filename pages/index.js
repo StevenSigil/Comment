@@ -12,10 +12,20 @@ import UserProfiles from "../models/profileModel";
 import Comments from "../models/commentModel";
 import Home from "../components/Home";
 
-export default function HomeIndex({ posts }) {
+import { useAllPosts } from "../util/swrHooks";
+
+export default function HomeIndex({ initialPosts }) {
   const [session, loading] = useSession();
   const [needProfile, setNeedProfile] = useState(false);
-  const [profileId, setProfileId] = useState(null);
+  const [profileId, setProfileId] = useState(false);
+
+  const { posts, isLoading, isError } = useAllPosts();
+
+  const [updatedPosts, setUpdatedPosts] = useState(initialPosts);
+
+  useEffect(() => {
+    setUpdatedPosts(posts);
+  }, [posts, setUpdatedPosts]);
 
   useEffect(() => {
     if (session && !session.user.pid) {
@@ -45,7 +55,11 @@ export default function HomeIndex({ posts }) {
         />
       ) : null}
 
-      <Home posts={posts} />
+      {isError ? <div>Error loading via SWR</div> : null}
+      {isLoading ? <div>loading from SWR</div> : null}
+      {/* {data ? JSON.stringify(data) : null} */}
+
+      <Home posts={updatedPosts} profileId={profileId} />
     </>
   );
 }
@@ -74,7 +88,7 @@ export async function getServerSideProps(context) {
 
   return {
     props: {
-      posts: JSON.parse(JSON.stringify(postList)),
+      initialPosts: JSON.parse(JSON.stringify(postList)),
     },
   };
 }

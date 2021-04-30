@@ -34,6 +34,7 @@
   &-textHeading {
     @extend .row;
     line-height: 1.4;
+    margin-bottom: 0.5rem;
 
     .left {
       flex: 2;
@@ -51,13 +52,43 @@
     }
     .right {
       @extend .col;
-      // flex: 1;
       margin-left: 1rem;
       align-items: flex-end;
       padding-top: 0.5rem;
 
-      p {
-        margin-bottom: 0.25rem;
+      .utilContainer {
+        @extend .row;
+        min-width: 50%;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+
+        p {
+          margin-bottom: 0;
+          flex: 1;
+          text-align: center;
+        }
+        button {
+          border: 1px solid #ff1515;
+          font-size: 1em;
+          font-weight: 500;
+          padding: 0.3rem 1rem 0.25rem;
+          display: flex;
+          align-items: center;
+
+          &:hover,
+          &:active {
+            background-color: #ff1515;
+            color: #eee;
+            transition: background-color 100ms ease-in-out;
+          }
+        }
+        .fill {
+          background-color: #ff1515;
+        }
+        // svg {
+        //   color: inherit;
+        // }
       }
     }
 
@@ -66,12 +97,17 @@
     }
   }
 
+  hr {
+    border-top: 1px solid #a8a8a8;
+  }
+
   &-singleComment {
     @extend .row;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
+    // margin-top: 1rem;
+    // margin-bottom: 0.5rem;
+    margin: 0.5rem 0;
     border-radius: 5px;
-    // border-top: 1px solid #a8a8a8;
+
     box-shadow: 0 2px 5px #a8a8a8, 0 -1px 3px #cecece;
 
     .userBtn {
@@ -105,8 +141,28 @@
     &:active {
       box-shadow: 5px 7px 10px #a8a8a8;
       background-color: #f0f0f0;
-      transition: all 200ms ease-in-out;
+      transition: all 100ms ease-in-out;
     }
+  }
+
+  &-newComment {
+    min-height: 75px;
+    margin: 0.5rem 0;
+    border-radius: 5px;
+    
+    form {
+      @extend .col;
+
+      textarea {
+        padding: 0.5rem 1rem;
+        font: inherit !important;
+        resize: none;
+        max-height: fit-content;
+        // min-height: max-content;
+        // overflow-y: auto;
+      }
+    }
+    
   }
 
   @media (max-width: 1200px) {

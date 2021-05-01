@@ -9,7 +9,7 @@ import UserProfiles from "../../../models/profileModel";
  *
  * API endpoint to:
  * - GET: retrieve ALL Post instances
- * - POST: Create a new Post instance, Comment instance, and link together with a
+ * - POST: Finds or Creates a Post instance, Comment instance, and link together with a
  * given UserProfile instance.
  *
  * Expecting request.body format as:
@@ -29,10 +29,13 @@ export default async (req, res) => {
     const { posting_user, original_url, comment } = req.body;
 
     if (posting_user && original_url && comment) {
-      try {
-        const previewData = await getLinkPreview(original_url.toString());
-        const { title, description, domain, img } = previewData;
+      // Check if the "Post" already exists from original URL
+      let foundPost = await tryToFindPost(original_url);
 
+      if (!foundPost) {
+        // No previous Post found... Create new one before adding comment!
+        const previewData = await getLinkPreview(original_url);
+        const { title, description, domain, img } = previewData;
         const newPost = new Posts({
           posting_user,
           original_url,
@@ -42,31 +45,21 @@ export default async (req, res) => {
           meta_image: img,
           meta_url: domain,
         });
-
-        const createdPost = await newPost.save().catch((e) => console.log(e));
-
-        const newComment = new Comments({
-          message: comment,
-          commenting_user: posting_user,
-        });
-        newComment.post = createdPost._id;
-
-        const createdComment = await newComment
-          .save()
-          .catch((e) => console.log(e));
-
-        if (createdPost && createdComment) {
-          console.log("====================================");
-          console.log("Post and Comment saved!");
-        }
-
-        const returnPost = await Posts.findById(createdPost._id);
-
-        return res.status(200).json(returnPost);
-      } catch (error) {
-        console.log(error);
-        return res.status(500).send(error);
+        foundPost = await newPost.save().catch((e) => console.log(e));
       }
+
+      // Create then add Comment to Post
+      const newComment = new Comments({
+        message: comment,
+        commenting_user: posting_user,
+      });
+      newComment.post = foundPost._id;
+
+      await newComment.save().catch((e) => console.log(e));
+
+      // return updated post
+      const returnPost = await Posts.findById(foundPost._id);
+      return res.status(201).json(returnPost);
     }
     return res
       .status(422)
@@ -76,6 +69,32 @@ export default async (req, res) => {
     .status(422)
     .json({ message: `${req.method} request is not supported...` });
 };
+
+/** Checks if a post already exists first by the 'original_url' then by meta tags */
+async function tryToFindPost(original_url) {
+  const firstCheck = await Posts.findOne({ original_url });
+
+  if (firstCheck) {
+    console.log("Post found on first try!");
+    return firstCheck;
+  }
+
+  // Check if "Post" exists from meta tags
+  const previewData = await getLinkPreview(original_url);
+  const secondCheck = await Posts.findOne({
+    meta_title: previewData.title,
+    meta_description: previewData.description,
+    meta_image: previewData.img,
+  });
+
+  if (secondCheck) {
+    console.log("Post found on second try!");
+    return secondCheck;
+  }
+
+  // Post not found
+  return null;
+}
 
 /**
  * @returns Populated array of ALL Post instances.

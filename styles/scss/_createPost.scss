@@ -1,0 +1,15 @@
+.createPost {
+  @extend .container;
+
+  form {
+    @extend .col;
+    margin-top: 2rem;
+
+    input {
+      border: 1px solid #000;
+      border-radius: 5px;
+      padding: 0.5rem 1rem;
+      margin: 0 0 1rem;
+    }
+  }
+}

@@ -1,0 +1,55 @@
+.userFeed {
+  @extend .container;
+  align-items: center;
+
+  h1 {
+    margin: 2rem auto 1rem;
+  }
+  .feedCard {
+    @extend .postCard;
+
+    .userActionText {
+      @extend .col;
+      margin: 1rem 5% 0.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid black;
+
+      p {
+        font-size: 1.25em;
+
+        span {
+          font-weight: 500;
+          font-style: italic;
+          color: #0059df;
+        }
+      }
+      blockquote {
+        margin-left: 1rem;
+        line-height: 1.4;
+        font-size: 0.75em;
+      }
+    }
+    .likeCommentContainer {
+      align-content: space-between !important;
+      margin-top: 0.25rem;
+
+      .utilContainer {
+        width: 100%;
+        div {
+          flex: 1;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-evenly;
+        }
+      }
+      .toPost {
+        width: 100%;
+
+        button {
+          min-width: max-content;
+          padding: 0.5rem 1rem !important;
+        }
+      }
+    }
+  }
+}

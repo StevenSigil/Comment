@@ -1,9 +1,16 @@
-import { signIn, signOut, useSession } from "next-auth/client";
+import { signIn, signOut, useSession, getSession } from "next-auth/client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const [session, loading] = useSession();
+  const [newUser, setNewUser] = useState(null);
+
+  useEffect(async () => {
+    const updated = await getSession().catch((e) => console.log(e));
+    setNewUser(updated.user);
+  }, []);
 
   return (
     <nav>
@@ -16,9 +23,11 @@ export default function Navbar() {
           <a>Home</a>
         </Link>
 
-        <Link href="/feed">
-          <a>Feed</a>
-        </Link>
+        {newUser ? (
+          <Link href={`/feed/${newUser.pid}`}>
+            <a>Feed</a>
+          </Link>
+        ) : null}
 
         <Link href="/temp/create-post">
           <a>CreatePost</a>

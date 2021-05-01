@@ -18,7 +18,14 @@ export default async (req, res) => {
   const singleProfile = await UserProfiles.findOne({ base_user_id: uid })
     .populate("posts", "meta_title", Posts)
     .populate("comments", "message date_time", Comments)
-    .populate("liked_posts", "meta_title", Posts)
+    .populate({
+      path: "liked_posts",
+      select: "post",
+      populate: {
+        path: "post",
+        model: Posts,
+      },
+    })
     .exec();
 
   return res.status(200).json(singleProfile);

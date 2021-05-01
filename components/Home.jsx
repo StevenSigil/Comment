@@ -31,34 +31,40 @@ export default function Home({ posts, profileId }) {
 
   return (
     <>
-      {loadingProfile ? <p>Loading Profile...</p> : null}
-
-      <div className="home">
-        <div className="heading">
-          <h1>Welcome!</h1>
-          <p>Have a look at some of the posts from the community</p>
+      {loadingProfile ? (
+        <div className="home">
+          <div className="heading">
+            <p>Loading Profile...</p>
+          </div>
         </div>
+      ) : (
+        <div className="home">
+          <div className="heading">
+            <h1>Welcome!</h1>
+            <p>Have a look at some of the posts from the community</p>
+          </div>
 
-        <div className="postContainer">
-          {posts.map((post) => (
-            <SinglePostCard
-              key={post._id}
-              post={post}
-              profile={profile}
-              handleLikeBtnPress={handleLikeBtnPress}
-            />
-          ))}
+          <div className="postContainer">
+            {posts.map((post) => (
+              <SinglePostCard
+                key={post._id}
+                post={post}
+                profile={profile}
+                handleLikeBtnPress={handleLikeBtnPress}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
 
 export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
-  const comments = post.comments; // for dev - REMOVE
-
   const [newCommentInput, setNewCommentInput] = useState("");
   const [showCommentInput, setShowCommentInput] = useState(false);
+
+  const comments = post.comments;
 
   function handleNewComment() {
     if (profile._id) {
@@ -86,7 +92,7 @@ export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
       mutate("/api/posts");
       mutate(`api/profiles/${profile._id}`);
     } catch (error) {
-      console.log(error);
+      throw Error(error);
     }
   }
 
@@ -128,21 +134,23 @@ export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
               {new Date(post.upload_date).toLocaleTimeString()}
             </p>
 
-            <div className="utilContainer">
-              <p>{post.comments.length}</p>
-              <button onClick={handleNewComment}>
-                <CommentIcon />
-              </button>
-            </div>
+            <div className="likeCommentContainer">
+              <div className="utilContainer">
+                <p>{post.comments.length}</p>
+                <button onClick={handleNewComment}>
+                  <CommentIcon />
+                </button>
+              </div>
 
-            <div className="utilContainer">
-              <p>{post.likes.length}</p>
-              <button
-                onClick={() => handleLikeBtnPress(post._id, userLikedPost)}
-                className={userLikedPost ? "fill" : ""}
-              >
-                <CheckCircle />
-              </button>
+              <div className="utilContainer">
+                <p>{post.likes.length}</p>
+                <button
+                  onClick={() => handleLikeBtnPress(post._id, userLikedPost)}
+                  className={userLikedPost ? "fill" : ""}
+                >
+                  <CheckCircle />
+                </button>
+              </div>
             </div>
           </div>
         </div>

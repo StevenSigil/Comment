@@ -30,15 +30,22 @@ export default async (req, res) => {
           { $addToSet: { likes: profileId } },
           { new: true }
         ).catch((e) => console.log(e));
-        console.log("Post.likes updated via add");
+        console.log("Post.likes updated via add\n");
 
         // add Profile._id to UserProfiles.liked_posts
         const updatedProfile = await UserProfiles.findOneAndUpdate(
           { _id: profileId },
-          { $addToSet: { liked_posts: updatedPost._id } },
+          {
+            $addToSet: {
+              liked_posts: { post: updatedPost._id, date_time: Date.now() },
+            },
+          },
           { new: true }
         ).catch((e) => console.log(e));
-        console.log("UserProfiles.liked_posts updated via add");
+        console.log(
+          "UserProfiles.liked_posts updated via add\n",
+          updatedProfile
+        );
 
         return res.status(200).json({
           data: {

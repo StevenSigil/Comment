@@ -26,11 +26,19 @@ const profileSchema = mongoose.Schema({
     type: [mongoose.Schema.Types.ObjectId],
     ref: "comments",
   },
-  liked_posts: {
-    // PostID
-    type: [mongoose.Schema.Types.ObjectId],
-    ref: "posts",
-  },
+  liked_posts: [
+    {
+      post: {
+        // PostID
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "posts",
+      },
+      date_time: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 });
 
 profileSchema.post("save", async function (doc) {

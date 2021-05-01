@@ -28,7 +28,14 @@ export default async (req, res) => {
     const listOfProfiles = await UserProfiles.find()
       .populate("posts", "meta_title", Posts)
       .populate("comments", "message date_time", Comments)
-      .populate("liked_posts", "meta_title", Posts)
+      .populate({
+        path: "liked_posts",
+        select: "post",
+        populate: {
+          path: "post",
+          model: Posts,
+        },
+      })
       .exec();
 
     return res.status(200).json(listOfProfiles);
@@ -51,8 +58,8 @@ export default async (req, res) => {
 
         const createdProfile = await profile
           .save()
-          .catch((error) => console.log("profiles/index.js: 54\n",error));
-          
+          .catch((error) => console.log("profiles/index.js: 54\n", error));
+
         const returnedProfile = await UserProfiles.findById(createdProfile._id);
 
         return res.status(201).json(returnedProfile);

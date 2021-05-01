@@ -28,3 +28,20 @@ export function useUserProfile(profileId) {
       errorProfile: "profile ID not found!",
     };
 }
+export function useUserFeed(profileId) {
+  if (profileId) {
+    const { data, error } = useSWR(`/api/profiles/${profileId}/feed`, fetcher);
+    if (error) return { profile: null };
+    return {
+      feed: data,
+      loadingFeed: !error && !data,
+      errorFeed: error,
+    };
+  } else {
+    return {
+      feed: false,
+      loadingFeed: false,
+      errorFeed: "profile ID not found!",
+    };
+  }
+}

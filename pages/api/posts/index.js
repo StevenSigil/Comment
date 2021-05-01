@@ -88,7 +88,7 @@ export async function getListOfAllPosts() {
     .populate("likes", ["display_name", "photo_url"], UserProfiles)
     .populate({
       path: "comments",
-      select: "message date_time",
+      select: "message date_time likes",
       populate: {
         path: "commenting_user",
         select: "display_name photo_url",

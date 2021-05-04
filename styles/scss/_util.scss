@@ -44,8 +44,68 @@ button {
   max-width: 5rem;
   background-color: transparent;
 }
-button:active, button:hover {
+button:active,
+button:hover {
   cursor: pointer;
   border-radius: 5px;
   border-width: 1px;
+}
+
+.loading-icon {
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+
+  svg {
+    animation: spinner 5000ms linear infinite;
+    fill: #0059df;
+  }
+
+  @keyframes spinner {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+.confirmDiv {
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  opacity: 0;
+  display: none;
+
+  &-anim {
+    display: block;
+    animation: confirmation 2000ms ease-in-out infinite;
+  }
+
+  svg {
+    stroke: #0059df;
+  }
+}
+@keyframes confirmation {
+  50% {
+    opacity: 100%;
+  }
+  70% {
+    opacity: 100%;
+  }
+  100% {
+    opacity: 0;
+    display: none;
+  }
 }

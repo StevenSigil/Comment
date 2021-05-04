@@ -26,7 +26,7 @@ export default async (req, res) => {
 
   if (req.method === "POST") {
     await connectToDatabase();
-    const { posting_user, original_url, comment } = req.body;
+    const { posting_user, original_url, comment } = await req.body.data;
 
     if (posting_user && original_url && comment) {
       // Check if the "Post" already exists from original URL
@@ -61,9 +61,10 @@ export default async (req, res) => {
       const returnPost = await Posts.findById(foundPost._id);
       return res.status(201).json(returnPost);
     }
-    return res
-      .status(422)
-      .json({ message: "Invalid data submitted. Post was not saved!" });
+    return res.status(422).json({
+      message: "Invalid data submitted. Post was not saved!",
+      original_data: req.body,
+    });
   }
   return res
     .status(422)

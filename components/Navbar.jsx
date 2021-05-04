@@ -29,7 +29,7 @@ export default function Navbar() {
           </Link>
         ) : null}
 
-        <Link href="/temp/create-post">
+        <Link href="/newpost">
           <a>CreatePost</a>
         </Link>
 

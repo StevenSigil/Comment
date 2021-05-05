@@ -100,19 +100,22 @@ export default async (req, res) => {
 };
 
 function prepPost(post) {
-  const commentLength = post.comments.length;
-  const likesLength = post.likes.length;
+  if (post) {
+    const commentLength = post.comments.length;
+    const likesLength = post.likes.length;
 
-  const newPost = {
-    comments: commentLength,
-    likes: likesLength,
-    _id: post._id,
-    meta_title: post.meta_title,
-    meta_description: post.meta_description,
-    meta_image: post.meta_image,
-    meta_url: post.meta_url,
-    upload_date: post.upload_date,
-  };
+    const newPost = {
+      comments: commentLength,
+      likes: likesLength,
+      _id: post._id,
+      meta_title: post.meta_title,
+      meta_description: post.meta_description,
+      meta_image: post.meta_image,
+      meta_url: post.meta_url,
+      upload_date: post.upload_date,
+    };
 
-  return newPost;
+    return newPost;
+  }
+  return null;
 }

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { connectToDatabase } from "../../../../util/mongodb";
+import { verifyUserProfileExists } from "../../../../util/backendApi";
 import UserProfiles from "../../../../models/profileModel";
 import Post from "../../../../models/postModel";
 
@@ -18,7 +19,7 @@ export default async (req, res) => {
 
   if (method === "POST") {
     if (req.body.profileId && req.body.command) {
-      const profileId = new mongoose.Types.ObjectId(req.body.profileId);
+      const profileId = mongoose.Types.ObjectId(req.body.profileId);
       const command = req.body.command;
       const existingProfile = await verifyUserProfileExists(profileId);
 
@@ -32,7 +33,7 @@ export default async (req, res) => {
         ).catch((e) => console.log(e));
         console.log("Post.likes updated via add\n");
 
-        // add Profile._id to UserProfiles.liked_posts
+        // add Post._id to UserProfiles.liked_posts
         const updatedProfile = await UserProfiles.findOneAndUpdate(
           { _id: profileId },
           {
@@ -96,9 +97,3 @@ export default async (req, res) => {
   const foundPost = await Post.findById(postId).exec();
   return res.status(200).json(foundPost);
 };
-
-export async function verifyUserProfileExists(id) {
-  const profileId = new mongoose.Types.ObjectId(id);
-  const query = await UserProfiles.findById(profileId).exec();
-  return { ok: Boolean(query), model: query };
-}

@@ -33,10 +33,17 @@ const profileSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "posts",
       },
-      date_time: {
-        type: Date,
-        default: Date.now,
+      date_time: { type: Date, default: Date.now },
+    },
+  ],
+  liked_comments: [
+    {
+      comment: {
+        // CommentID
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "comments",
       },
+      date_time: { type: Date, default: Date.now },
     },
   ],
 });

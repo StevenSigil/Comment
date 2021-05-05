@@ -84,6 +84,11 @@
             align-items: center;
             transition: all 200ms ease-in-out;
 
+            svg {
+              min-width: 24px;
+              height: auto;
+            }
+
             &:hover {
               background-color: #0059df;
               color: #eee;

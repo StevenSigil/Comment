@@ -11,6 +11,7 @@ import Post from "../models/postModel";
 import UserProfiles from "../models/profileModel";
 import Comments from "../models/commentModel";
 import Home from "../components/Home";
+import LoadingIcon from "../components/LoadingIcon";
 
 import { useAllPosts } from "../util/swrHooks";
 
@@ -35,7 +36,7 @@ export default function HomeIndex({ initialPosts }) {
   }, [session]);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <LoadingIcon />;
   }
 
   return (
@@ -44,8 +45,6 @@ export default function HomeIndex({ initialPosts }) {
         <title>Create Next App</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      {/* <p>Profile ID: {profileId}</p> */}
 
       {needProfile && session ? (
         <DisplayNameForm
@@ -56,10 +55,11 @@ export default function HomeIndex({ initialPosts }) {
       ) : null}
 
       {isError ? <div>Error loading via SWR</div> : null}
-      {isLoading ? <div>loading from SWR</div> : null}
-      {/* {data ? JSON.stringify(data) : null} */}
-
-      <Home posts={updatedPosts} profileId={profileId} />
+      {isLoading ? (
+        <LoadingIcon />
+      ) : (
+        <Home posts={updatedPosts} profileId={profileId} />
+      )}
     </>
   );
 }

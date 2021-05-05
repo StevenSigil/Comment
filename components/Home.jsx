@@ -61,52 +61,17 @@ export default function Home({ posts, profileId }) {
 }
 
 export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
-  const [newCommentInput, setNewCommentInput] = useState("");
   const [showCommentInput, setShowCommentInput] = useState(false);
 
   const comments = post.comments;
 
   function handleNewComment() {
     if (profile._id) {
-      setShowCommentInput(true);
+      setShowCommentInput(!showCommentInput);
     } else {
       // User is not signed in!!!
       alert("You must be signed in to comment on this post.");
     }
-  }
-
-  async function handleCommentSubmit(e) {
-    e.preventDefault();
-
-    const data = {
-      message: newCommentInput,
-      commenting_user: profile._id,
-      post: post._id,
-    };
-
-    try {
-      const x = await axios.post(`${SERVER}/api/comments`, data);
-      console.log(x.data);
-      setNewCommentInput("");
-      setShowCommentInput(false);
-      mutate("/api/posts");
-      mutate(`api/profiles/${profile._id}`);
-    } catch (error) {
-      throw Error(error);
-    }
-  }
-
-  function handleCommentTextChange(e) {
-    const target = e.target;
-
-    if (target.value.length < 10) {
-      e.target.rows = "2";
-    } else {
-      target.style.height = "auto";
-      const height = Math.abs(Math.round(target.scrollHeight / 30));
-      e.target.rows = height;
-    }
-    setNewCommentInput(e.target.value);
   }
 
   // Checks if the curUser liked this Post instance and changes display
@@ -155,6 +120,14 @@ export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
           </div>
         </div>
 
+        {showCommentInput ? (
+          <CommentInputForm
+            profileId={profile._id}
+            postId={post._id}
+            setShowCommentInput={setShowCommentInput}
+          />
+        ) : null}
+
         {comments.length > 0 ? <hr /> : null}
 
         {comments &&
@@ -174,24 +147,6 @@ export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
               </div>
             );
           })}
-
-        <div
-          className="postCard-newComment"
-          style={{ display: showCommentInput ? "block" : "none" }}
-        >
-          <form onSubmit={handleCommentSubmit}>
-            <label htmlFor="commentInput">Share your thoughts</label>
-            <textarea
-              id="commentInput"
-              value={newCommentInput}
-              onChange={handleCommentTextChange}
-              placeholder="Your comment"
-              maxLength="500"
-              rows="2"
-            />
-            <button type="submit">Submit</button>
-          </form>
-        </div>
       </div>
 
       {/* <UploadCommentModal
@@ -201,5 +156,61 @@ export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
         profileId={profileId}
       /> */}
     </>
+  );
+}
+
+function CommentInputForm(props) {
+  const { profileId, postId, setShowCommentInput } = props;
+
+  const [newCommentInput, setNewCommentInput] = useState("");
+
+  async function handleCommentSubmit(e) {
+    e.preventDefault();
+
+    const data = {
+      message: newCommentInput,
+      commenting_user: profileId,
+      post: postId,
+    };
+
+    try {
+      await axios.post(`/api/comments`, data);
+      setNewCommentInput("");
+      setShowCommentInput(false);
+      mutate("/api/posts");
+      mutate(`api/profiles/${profileId}`);
+    } catch (error) {
+      throw Error(error);
+    }
+  }
+
+  function handleCommentTextChange(e) {
+    const target = e.target;
+
+    if (target.value.length < 10) {
+      e.target.rows = "2";
+    } else {
+      target.style.height = "auto";
+      const height = Math.abs(Math.round(target.scrollHeight / 30));
+      e.target.rows = height;
+    }
+    setNewCommentInput(e.target.value);
+  }
+
+  return (
+    <div className="postCard-newComment">
+      <form onSubmit={handleCommentSubmit}>
+        <label htmlFor="commentInput">Share your thoughts</label>
+        <textarea
+          id="commentInput"
+          value={newCommentInput}
+          onChange={handleCommentTextChange}
+          placeholder="Your comment"
+          maxLength="500"
+          rows="2"
+        />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
   );
 }

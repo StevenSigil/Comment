@@ -4,6 +4,10 @@ import { ReactComponent as CommentIcon } from "../../public/static/icons/comment
 
 const SERVER = process.env.SERVER;
 
+/**
+ * Card used in '/feed/<ProfileId>' frontend route to display a user's interaction with a
+ * post. Comments are omitted at this time.
+ */
 export default function PostCard({ post, actionType, message, basicProfile }) {
   var action = "";
 
@@ -23,8 +27,6 @@ export default function PostCard({ post, actionType, message, basicProfile }) {
         break;
     }
   }
-
-  console.log(post);
 
   return (
     <div className="feedCard">
@@ -64,6 +66,7 @@ export default function PostCard({ post, actionType, message, basicProfile }) {
                 <p>{post.comments}</p>
                 <CommentIcon />
               </div>
+              
               <div className="">
                 <p>{post.comments}</p>
                 <CheckCircle />

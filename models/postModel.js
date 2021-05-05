@@ -50,7 +50,7 @@ postSchema.post("save", async function (doc) {
     { $addToSet: { posts: doc._id } }
   )
     .exec()
-    .catch((e) => console.log("postModel: 53",e));
+    .catch((e) => console.log("postModel: 53", e));
 
   if (profile.ok === 1) console.log("profile updated\n", profile);
 });

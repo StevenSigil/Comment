@@ -30,7 +30,7 @@ export default async (req, res) => {
 
     if (posting_user && original_url && comment) {
       // Check if the "Post" already exists from original URL
-      let foundPost = await tryToFindPost(original_url);
+      let foundPost = await tryToFindPostByUrl(original_url);
 
       if (!foundPost) {
         // No previous Post found... Create new one before adding comment!
@@ -72,7 +72,7 @@ export default async (req, res) => {
 };
 
 /** Checks if a post already exists first by the 'original_url' then by meta tags */
-async function tryToFindPost(original_url) {
+async function tryToFindPostByUrl(original_url) {
   const firstCheck = await Posts.findOne({ original_url });
 
   if (firstCheck) {

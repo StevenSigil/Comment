@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { ReactComponent as CheckCircle } from "../public/static/icons/checkCircle.svg";
 import { ReactComponent as CommentIcon } from "../public/static/icons/commentIcon.svg";
+import { ReactComponent as TouchIcon } from "../public/static/icons/handTouch.svg";
 // import UploadCommentModal from "./UploadCommentModal";
 
 import useSWR, { mutate } from "swr";
@@ -62,15 +63,37 @@ export default function Home({ posts, profileId }) {
 
 export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
   const [showCommentInput, setShowCommentInput] = useState(false);
+  const [newCommentInput, setNewCommentInput] = useState("");
 
   const comments = post.comments;
 
-  function handleNewComment() {
+  function handleCommentBtn() {
     if (profile._id) {
       setShowCommentInput(!showCommentInput);
     } else {
       // User is not signed in!!!
       alert("You must be signed in to comment on this post.");
+    }
+  }
+
+  async function handleCommentSubmit(e) {
+    e.preventDefault();
+
+    const data = {
+      message: newCommentInput,
+      commenting_user: profile._id,
+      post: post._id,
+    };
+
+    try {
+      await axios.post(`/api/comments`, data);
+      setNewCommentInput("");
+      setShowCommentInput(false);
+      mutate("/api/posts");
+      mutate(`api/profiles/${profile._id}`);
+    } catch (error) {
+      console.log(error);
+      throw Error(error);
     }
   }
 
@@ -102,19 +125,21 @@ export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
             <div className="likeCommentContainer">
               <div className="utilContainer">
                 <p>{post.comments.length}</p>
-                <button onClick={handleNewComment}>
-                  <CommentIcon />
-                </button>
+
+                <CommentButton onClickFunction={handleCommentBtn} />
               </div>
 
               <div className="utilContainer">
                 <p>{post.likes.length}</p>
-                <button
-                  onClick={() => handleLikeBtnPress(post._id, userLikedPost)}
-                  className={userLikedPost ? "fill" : ""}
-                >
-                  <CheckCircle />
-                </button>
+
+                <LikeButton
+                  data={{
+                    type: "post",
+                    submitId: post._id,
+                    isActive: userLikedPost,
+                    onClickFunction: handleLikeBtnPress,
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -122,9 +147,9 @@ export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
 
         {showCommentInput ? (
           <CommentInputForm
-            profileId={profile._id}
-            postId={post._id}
-            setShowCommentInput={setShowCommentInput}
+            submitFunction={handleCommentSubmit}
+            newCommentInput={newCommentInput}
+            setNewCommentInput={setNewCommentInput}
           />
         ) : null}
 
@@ -133,18 +158,12 @@ export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
         {comments &&
           comments.map((comment) => {
             return (
-              <div key={comment._id} className="postCard-singleComment">
-                {/* TODO: Have this be clickable, show options to comment on the comment or like or whatever */}
-
-                <div className="userBtn">
-                  <img src={comment.commenting_user.photo_url} />
-                  <p>{comment.commenting_user.display_name}</p>
-                </div>
-                <div className="commentText">
-                  <p className="date">{comment.date_time}</p>
-                  <p className="message">{comment.message}</p>
-                </div>
-              </div>
+              <SingleComment
+                comment={comment}
+                key={comment._id}
+                profile={profile}
+                postId={post._id}
+              />
             );
           })}
       </div>
@@ -160,29 +179,7 @@ export function SinglePostCard({ post, profile, handleLikeBtnPress }) {
 }
 
 function CommentInputForm(props) {
-  const { profileId, postId, setShowCommentInput } = props;
-
-  const [newCommentInput, setNewCommentInput] = useState("");
-
-  async function handleCommentSubmit(e) {
-    e.preventDefault();
-
-    const data = {
-      message: newCommentInput,
-      commenting_user: profileId,
-      post: postId,
-    };
-
-    try {
-      await axios.post(`/api/comments`, data);
-      setNewCommentInput("");
-      setShowCommentInput(false);
-      mutate("/api/posts");
-      mutate(`api/profiles/${profileId}`);
-    } catch (error) {
-      throw Error(error);
-    }
-  }
+  const { submitFunction, newCommentInput, setNewCommentInput } = props;
 
   function handleCommentTextChange(e) {
     const target = e.target;
@@ -199,7 +196,7 @@ function CommentInputForm(props) {
 
   return (
     <div className="postCard-newComment">
-      <form onSubmit={handleCommentSubmit}>
+      <form onSubmit={submitFunction}>
         <label htmlFor="commentInput">Share your thoughts</label>
         <textarea
           id="commentInput"
@@ -212,5 +209,186 @@ function CommentInputForm(props) {
         <button type="submit">Submit</button>
       </form>
     </div>
+  );
+}
+
+function SingleComment({ comment, profile, postId }) {
+  const [showCommentSecondary, setShowCommentSecondary] = useState(false);
+  const [showReplyInput, setShowReplyInput] = useState(false);
+  const [newReplyInput, setNewReplyInput] = useState("");
+
+  // if (comment._id === "60820a5e0657d31cc0b13e81") {
+  //   console.log(comment);
+  // }
+
+  const userLikedComment =
+    profile && comment.likes.some((like) => like === profile._id);
+
+  function handleClick() {
+    setShowCommentSecondary(!showCommentSecondary);
+  }
+
+  async function handleCommentLike(commentId, isActive) {
+    const likeData = {
+      profileId: profile._id,
+      command: isActive ? "remove" : "add",
+    };
+
+    try {
+      await axios.post(`/api/comments/${commentId}/likes`, likeData);
+      mutate("/api/posts");
+      mutate(`api/profiles/${profile._id}`);
+      console.log("Comment likes updated");
+    } catch (error) {
+      console.log("Err!", error);
+    }
+  }
+
+  async function handleReplySubmit(e) {
+    e.preventDefault();
+    const data = {
+      message: newReplyInput,
+      commenting_user: profile._id,
+      post: postId,
+    };
+
+    try {
+      await axios.post(`/api/comments/${comment._id}/reply`, data);
+      setNewReplyInput("");
+      setShowReplyInput(false);
+      setShowCommentSecondary(false);
+      mutate("/api/posts");
+      mutate(`api/profiles/${profile._id}`);
+    } catch (error) {
+      console.log(error);
+      throw Error(error);
+    }
+  }
+
+  return (
+    <>
+      <div className="commentOuter">
+        <div className="postCard-singleComment" onClick={handleClick}>
+          <div className="userBtn">
+            <img src={comment.commenting_user.photo_url} />
+            <p>{comment.commenting_user.display_name}</p>
+          </div>
+
+          <div className="commentText">
+            <p className="date">{comment.date_time}</p>
+            <p className="message">{comment.message}</p>
+          </div>
+
+          {/* <div className="touchIcon">
+            <TouchIcon />
+          </div> */}
+
+          <div className="commentBtns">
+            <LikeButton
+              data={{
+                type: "comment",
+                submitId: comment._id,
+                isActive: userLikedComment,
+                onClickFunction: handleCommentLike,
+              }}
+            />
+
+            <CommentButton
+              onClickFunction={() => setShowReplyInput(!showReplyInput)}
+            />
+          </div>
+        </div>
+
+        {/* {showCommentSecondary ? (
+          <div className="commentActions">
+            <LikeButton
+              data={{
+                type: "comment",
+                submitId: comment._id,
+                isActive: userLikedComment,
+                onClickFunction: handleCommentLike,
+              }}
+            />
+
+            <CommentButton
+              onClickFunction={() => setShowReplyInput(!showReplyInput)}
+            />
+          </div>
+        ) : null} */}
+
+        {showReplyInput ? (
+          <div>
+            <CommentInputForm
+              submitFunction={handleReplySubmit}
+              newCommentInput={newReplyInput}
+              setNewCommentInput={setNewReplyInput}
+            />
+          </div>
+        ) : null}
+
+        {comment.replys.length > 0 &&
+          // showCommentSecondary &&
+          comment.replys.map((reply) => {
+            return <SingleReplyComment key={reply._id} reply={reply} />;
+          })}
+      </div>
+    </>
+  );
+}
+
+function SingleReplyComment({ reply }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div
+      className="postCard-singleComment reply"
+      onClick={() => setShow(!show)}
+    >
+      <div className="userBtn">
+        <img src={reply.commenting_user.photo_url} />
+        <p>{reply.commenting_user.display_name}</p>
+      </div>
+
+      <div className="commentText">
+        <p className="date">{reply.date_time}</p>
+        <p className="message">{reply.message}</p>
+      </div>
+
+      <div className="commentBtns">
+        <LikeButton
+          data={{
+            type: "comment",
+            submitId: reply._id,
+            // isActive: userLikedComment,
+            // onClickFunction: handleCommentLike,
+          }}
+        />
+
+        <div className="touchIcon">
+          <TouchIcon />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LikeButton({ data }) {
+  const { type, submitId, isActive, onClickFunction } = data;
+
+  return (
+    <button
+      onClick={() => onClickFunction(submitId, isActive)}
+      className={isActive ? "likeCommentBtn fill" : "likeCommentBtn"}
+    >
+      <CheckCircle />
+    </button>
+  );
+}
+
+function CommentButton({ onClickFunction }) {
+  return (
+    <button onClick={onClickFunction} className="likeCommentBtn">
+      <CommentIcon />
+    </button>
   );
 }

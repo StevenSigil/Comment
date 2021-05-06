@@ -4,7 +4,6 @@ import Comments from '../../../../models/commentModel';
 export default async (req, res) => {
   await connectToDatabase();
 
-  const method = req.method;
   const commentId = req.query.id;
 
   // GET req.

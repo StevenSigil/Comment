@@ -29,6 +29,14 @@ const commentSchema = mongoose.Schema({
     type: [mongoose.Schema.Types.ObjectId],
     ref: "user_profiles",
   },
+  replys: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "comments",
+  },
+  is_reply: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 commentSchema.post("save", async function (doc) {

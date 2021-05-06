@@ -1,13 +1,14 @@
 // Main page of site. User can see whatever posts they want but cannot comment/like/etc... unless signed in.
 
 import { connectToDatabase } from "../util/mongodb";
+
 import { useEffect, useState } from "react";
 
 import { getSession, useSession } from "next-auth/client";
 import axios from "axios";
 
 import Head from "next/head";
-import Post from "../models/postModel";
+import Posts from "../models/postModel";
 import UserProfiles from "../models/profileModel";
 import Comments from "../models/commentModel";
 import Home from "../components/Home";
@@ -70,21 +71,58 @@ export async function getServerSideProps(context) {
 
   // TODO: paginate this response!!!
 
-  await connectToDatabase();
-  const postList = await Post.find()
+  const selectOptions = "message date_time replys is_reply likes";
+
+  const postList = await Posts.find()
     .populate("posting_user", ["display_name", "photo_url"], UserProfiles)
     .populate("likes", ["display_name", "photo_url"], UserProfiles)
     .populate({
       path: "comments",
-      select: "message date_time",
-      populate: {
-        path: "commenting_user",
-        select: "display_name photo_url",
-        model: UserProfiles,
-      },
+      select: selectOptions,
+      match: { is_reply: false },
+      populate: [
+        {
+          path: "replys",
+          select: selectOptions,
+          model: Comments,
+          populate: {
+            path: "commenting_user",
+            select: "display_name photo_url",
+            model: UserProfiles,
+          },
+        },
+        {
+          path: "commenting_user",
+          select: "display_name photo_url",
+          model: UserProfiles,
+        },
+      ],
       model: Comments,
     })
     .exec();
+
+  // await connectToDatabase();
+  // const postList = await Posts.find()
+  //   .populate("posting_user", ["display_name", "photo_url"], UserProfiles)
+  //   .populate("likes", ["display_name", "photo_url"], UserProfiles)
+  //   .populate({
+  //     path: "comments",
+  //     select: selectOptions,
+  //     populate: [
+  //       {
+  //         path: "replys",
+  //         select: selectOptions,
+  //         model: Comments,
+  //       },
+  //       {
+  //         path: "commenting_user",
+  //         select: "display_name photo_url",
+  //         model: UserProfiles,
+  //       },
+  //     ],
+  //     model: Comments,
+  //   })
+  //   .exec();
 
   return {
     props: {

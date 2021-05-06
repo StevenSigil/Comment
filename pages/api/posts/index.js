@@ -103,17 +103,32 @@ async function tryToFindPostByUrl(original_url) {
 export async function getListOfAllPosts() {
   await connectToDatabase();
 
+  const selectOptions = "message date_time replys is_reply likes";
+
   const listOfPosts = await Posts.find()
     .populate("posting_user", ["display_name", "photo_url"], UserProfiles)
     .populate("likes", ["display_name", "photo_url"], UserProfiles)
     .populate({
       path: "comments",
-      select: "message date_time likes",
-      populate: {
-        path: "commenting_user",
-        select: "display_name photo_url",
-        model: UserProfiles,
-      },
+      select: selectOptions,
+      match: { is_reply: false },
+      populate: [
+        {
+          path: "replys",
+          select: selectOptions,
+          model: Comments,
+          populate: {
+            path: "commenting_user",
+            select: "display_name photo_url",
+            model: UserProfiles,
+          },
+        },
+        {
+          path: "commenting_user",
+          select: "display_name photo_url",
+          model: UserProfiles,
+        },
+      ],
       model: Comments,
     })
     .exec();
